@@ -22,13 +22,13 @@ func main() {
 func barrier(endpoints ...string) {
   requestNumber := len(endpoints)
 
-  in := make(chan barrierResp, requestNumber)
+  channel := make(chan barrierResp, requestNumber)
   defer close(in)
   responses := make([]barrierResp, requestNumber)
   
   
     for _, endpoint := range endpoints {
-      gor makeRequest(in, endpoints)
+      gor makeRequest(channel, endpoints)
     }
 
     var hasError bool 
@@ -47,4 +47,25 @@ func barrier(endpoints ...string) {
       fmt.Println(resp.Resp)
       }
    }
+}
+
+func makeRequest(out chan <- barrierResp, url string) {
+  res := barrierResp{}
+  client := http.Client {
+    Timeout: time.Duration(time.Duration(timeoutMilliseconds) * time.Millisecond)
+  }
+  resp, err := client.Det(url)
+  if err != nil {
+    res.Err = err
+    out <- res
+    return
+  }
+  byt, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    res.Err = err
+    out <- res
+    return
+  }
+  res.Resp = string(byt)
+  out <- res
 }
